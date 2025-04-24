@@ -11,6 +11,7 @@ import { roomStyle, gameTitleStyle } from './page.styles'; // Import styles
 import FridgeMenu from '../components/game/FridgeMenu';
 import DoorMenu from '../components/game/DoorMenu'; // Import DoorMenu
 import StoreMenu from '../components/game/StoreMenu'; // Import StoreMenu
+import EnemyInfoMenu from '../components/game/EnemyInfoMenu'; // Import EnemyInfoMenu
 
 // --- Game Area Component ---
 const GameArea = () => {
@@ -18,6 +19,8 @@ const GameArea = () => {
   const [isFridgeMenuOpen, setIsFridgeMenuOpen] = useState(false);
   const [isDoorMenuOpen, setIsDoorMenuOpen] = useState(false); // State for DoorMenu
   const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false); // State for StoreMenu
+    const [isEnemyInfoMenuOpen, setIsEnemyInfoMenuOpen] = useState(false); // State for EnemyInfoMenu
+
   const [fridgeInventory, setFridgeInventory] = useState([
     { item: null, count: 0 },
     { item: null, count: 0 },
@@ -32,6 +35,12 @@ const GameArea = () => {
   // Target positions for menus
   const [fridgeTarget, setFridgeTarget] = useState<{x: number, y:number} | null>(null);
   const [doorTarget, setDoorTarget] = useState<{x: number, y:number} | null>(null);
+
+    // Enemy Info
+    const [enemyHP, setEnemyHP] = useState(100);
+    const [enemyAttack, setEnemyAttack] = useState(1);
+    const [enemyCombo, setEnemyCombo] = useState(1);
+    const [enemyStyle, setEnemyStyle] = useState(1);
 
   // UI State
   const [health, setHealth] = useState(100);
@@ -118,7 +127,16 @@ const GameArea = () => {
   }
 
   const handleFightOption = () => {
-      console.log("Fight option selected");
+      const newEnemyAttack = Math.floor(Math.random() * 3) + 1;
+      const newEnemyCombo = Math.floor(Math.random() * 3) + 1;
+      const newEnemyStyle = Math.floor(Math.random() * 3) + 1;
+
+      setEnemyHP(100);
+      setEnemyAttack(newEnemyAttack);
+      setEnemyCombo(newEnemyCombo);
+      setEnemyStyle(newEnemyStyle);
+
+      setIsEnemyInfoMenuOpen(true);
       setIsDoorMenuOpen(false);
       setDoorTarget(null);
   }
@@ -199,6 +217,16 @@ const GameArea = () => {
         return newInventory;
       });
     };
+
+      const handleFight = () => {
+          setIsEnemyInfoMenuOpen(false);
+          setDoorTarget(null); //clear the door target
+      };
+
+    const handleGoBackToDoorMenu = () => {
+        setIsEnemyInfoMenuOpen(false);
+        setIsDoorMenuOpen(true);
+    }
 
    // --- Scene Object Configuration ---
   const sceneObjectsData: SceneObjectConfig[] = [
@@ -336,7 +364,7 @@ const GameArea = () => {
           x > punchingBagCenterX - punchingBagInteractRangeX &&
           x < punchingBagCenterX + punchingBagInteractRangeX &&
           y > punchingBagCenterY - punchingBagInteractRangeY &&
-          y < punchingBagCenterY + punchingBagInteractRangeY;
+          y > punchingBagCenterY + punchingBagInteractRangeY;
           
       if (!isMoving && isOnPunchingBag) {
           setCombo(prev => prev + 0.01); 
@@ -360,6 +388,7 @@ const GameArea = () => {
         setIsFridgeMenuOpen(true);
         setIsDoorMenuOpen(false);
         setIsStoreMenuOpen(false);
+        setIsEnemyInfoMenuOpen(false);
         setFridgeTarget(null);
       } else {
         setIsFridgeMenuOpen(false);
@@ -372,6 +401,7 @@ const GameArea = () => {
         setIsDoorMenuOpen(true);
         setIsFridgeMenuOpen(false);
         setIsStoreMenuOpen(false);
+          setIsEnemyInfoMenuOpen(false);
         setDoorTarget(null);
       } else {
         setIsDoorMenuOpen(false);
@@ -380,7 +410,7 @@ const GameArea = () => {
   }, [playerPosition, fridgeTarget, doorTarget]);
 
   const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isFridgeMenuOpen || isDoorMenuOpen || isStoreMenuOpen) {
+      if (isFridgeMenuOpen || isDoorMenuOpen || isStoreMenuOpen || isEnemyInfoMenuOpen) {
           return; // Prevent movement when any menu is open
       }
     if (isMoving || (e.target as HTMLElement).closest('[data-clickable-object="true"]') || 
@@ -429,6 +459,17 @@ const GameArea = () => {
               onBuyPizza={handleBuyPizza}
               onBuyProteinShake={handleBuyProteinShake}
               onGoBack={handleGoBack}
+          />
+      )}
+
+      {isEnemyInfoMenuOpen && (
+          <EnemyInfoMenu
+              hp={enemyHP}
+              attack={enemyAttack}
+              combo={enemyCombo}
+              style={enemyStyle}
+              onGoBack={handleGoBackToDoorMenu}
+              onFight={handleFight}
           />
       )}
 

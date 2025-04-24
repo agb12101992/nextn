@@ -147,6 +147,8 @@ const DebugDisplay: React.FC<DebugDisplayProps> = ({
              </div>
           )}
 
+          <button style={debugButtonStyle} onClick={() => {}}>Fight Room</button>
+
         </div>
       )}
     </>
