@@ -8,11 +8,12 @@ export interface SceneObjectConfig {
   id: string;
   position: { left: string; top: string };
   size: { width: string; height: string };
-  spriteUrl: string;
+  spriteUrl?: string;
   alt: string;
-  clickHandler: () => void;
+  clickHandler?: () => void;
   wrapperZIndex?: number;
   objectZIndex?: number;
+  near?: boolean;
 }
 
 interface SceneObjectsProps {
@@ -25,7 +26,7 @@ const SceneObjects: React.FC<SceneObjectsProps> = ({ objects }) => {
     <>
       {objects.map((obj) => (
         <div
-          key={obj.id} // Unique key for list rendering
+          key={obj.id}
           onClick={obj.clickHandler}
           data-clickable-object="true"
           style={{
@@ -41,13 +42,15 @@ const SceneObjects: React.FC<SceneObjectsProps> = ({ objects }) => {
           }}
         >
           <GameObject
-            position={{ x: 0, y: 0 }} // Positioned relative to wrapper
+            position={{ x: 0, y: 0 }}
             spriteUrl={obj.spriteUrl}
-            size={obj.size} // Pass the whole size object
+            size={obj.size}
             alt={obj.alt}
-            zIndex={obj.objectZIndex || 10} // Default zIndex if not provided
+            zIndex={obj.objectZIndex || 10}
           />
         </div>
+        
+        
       ))}
     </>
   );

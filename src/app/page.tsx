@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react'; 
 // Import game components
 import PlayerCharacter from '../components/game/PlayerCharacter';
 import PlayerStatsUI from '../components/game/PlayerStatsUI';
@@ -8,10 +8,20 @@ import DebugDisplay from '../components/game/DebugDisplay';
 import SceneObjects, { SceneObjectConfig } from '../components/game/SceneObjects'; 
 import SplashScreen from '../components/game/SplashScreen'; 
 import { roomStyle, gameTitleStyle } from './page.styles'; // Import styles
+import FridgeMenu from '../components/game/FridgeMenu';
 
 // --- Game Area Component ---
 const GameArea = () => {
   // Game State
+  const [isFridgeMenuOpen, setIsFridgeMenuOpen] = useState(false);
+  const [fridgeInventory, setFridgeInventory] = useState([
+    { items: [] }, 
+    { items: [] }, 
+    { items: [] }, 
+    { items: [] }, 
+    { items: [] }, 
+  ]);
+
   const [playerPosition, setPlayerPosition] = useState({ x: 50, y: 50 });
   const [isMoving, setIsMoving] = useState(false);
 
@@ -37,9 +47,47 @@ const GameArea = () => {
     }, 500);
   }, [isMoving]);
 
+    // --- Debug Handlers ---
+    const restoreStats = () => {
+        setHealth(MAX_VALUE); setHunger(MAX_VALUE); setAttack(1); setCombo(1); 
+        setStyleLevel(1); setStyleExp(0); 
+        setCurrentStyleName("Street");
+      };
+    const modifyHealth = useCallback((amount: number) => {
+        setHealth(prev => Math.max(0, Math.min(MAX_VALUE, prev + amount)));
+      }, [MAX_VALUE]);
+    const modifyHunger = useCallback((amount: number) => {
+        setHunger(prev => Math.max(0, Math.min(MAX_VALUE, prev + amount)));
+      }, [MAX_VALUE]);
+    const modifyAttack = useCallback((amount: number) => {
+        setAttack(prev => Math.max(0.1, prev + amount)); 
+      }, []);
+    const modifyCombo = useCallback((amount: number) => {
+        setCombo(prev => Math.max(1, prev + amount));
+      }, []);
+    const modifyStyleLevel = useCallback((amount: number) => {
+        setStyleLevel(prev => Math.max(1, prev + amount)); 
+      }, []);
+    const modifyStyleExp = useCallback((amount: number) => {
+        setStyleExp(prev => {
+            const newExp = prev + amount;
+            if (newExp >= MAX_STYLE_EXP) {
+                setStyleLevel(prevLevel => prevLevel + 1);
+                return newExp - MAX_STYLE_EXP; 
+            } else if (newExp < 0) {
+                setStyleLevel(prevLevel => Math.max(1, prevLevel - 1)); 
+                return Math.max(0, MAX_STYLE_EXP + newExp); 
+            } else {
+                return newExp;
+            }
+        });
+      }, [MAX_STYLE_EXP]);
+
   // Click Handlers for Objects
   const handleCouchClick = useCallback(() => { movePlayer(50, 80); }, [movePlayer]);
-  const handleFridgeClick = useCallback(() => { movePlayer(18, 40); }, [movePlayer]);
+  const handleFridgeClick = useCallback(() => {
+    movePlayer(18, 40);
+  }, [movePlayer]);
   const handleBooktableClick = useCallback(() => { movePlayer(25, 80); }, [movePlayer]);
   const handleRugClick = useCallback(() => { movePlayer(50, 30); }, [movePlayer]);
   const handlePunchingBagClick = useCallback(() => { movePlayer(75, 90); }, [movePlayer]); 
@@ -59,13 +107,13 @@ const GameArea = () => {
     },
     {
       id: 'fridge',
-      position: { left: '18%', top: '40%' },
-      size: { width: '11.25rem', height: '22.5rem' },
-      spriteUrl: '/Sprites/fridge.png',
-      alt: 'A refrigerator',
-      clickHandler: handleFridgeClick,
-      wrapperZIndex: 11,
-      objectZIndex: 10
+        position: { left: '18%', top: '40%' },
+        size: { width: '11.25rem', height: '22.5rem' },
+        spriteUrl: '/Sprites/fridge.png',
+        alt: 'A refrigerator',
+        clickHandler: handleFridgeClick,
+        wrapperZIndex: 11,
+        objectZIndex: 10,
     },
     {
       id: 'booktable',
@@ -162,9 +210,9 @@ const GameArea = () => {
       const rugInteractRangeY = 5; 
       const isOnRug =
           x > rugCenterX - rugInteractRangeX &&
-          x < rugCenterX + rugInteractRangeX &&
+          x < rugCenterX + booktableInteractRangeX &&
           y > rugCenterY - rugInteractRangeY &&
-          y < rugCenterY + rugInteractRangeY;
+          y < rugCenterY + booktableInteractRangeY;
 
       if (!isMoving && isOnRug) {
         setAttack(prev => prev + 0.01); 
@@ -189,63 +237,27 @@ const GameArea = () => {
           isInteractingWithObject = true;
       }
 
-      // --- Door Interaction (Placeholder) ---
-      // const doorCenterX = 75;
-      // const doorCenterY = 30;
-      // const doorInteractRangeX = 4; // Approx half-width % for 8rem
-      // const doorInteractRangeY = 8; // Approx half-height % for 16rem
-      // const isOnDoor = 
-      //     x > doorCenterX - doorInteractRangeX &&
-      //     x < doorCenterX + doorInteractRangeX &&
-      //     y > doorCenterY - doorInteractRangeY &&
-      //     y < doorCenterY + doorInteractRangeY;
-
-      // if (!isMoving && isOnDoor) {
-      //    // Add door functionality later
-      // }
-
     }, 100); 
 
     return () => clearInterval(interactionInterval);
   }, [playerPosition, isMoving, health, hunger, styleLevel, setHealth, setHunger, setStyleLevel, setStyleExp, setAttack, setCombo, MAX_VALUE, MAX_STYLE_EXP]); 
 
-  // --- Debug Handlers ---
-  const restoreStats = () => {
-    setHealth(MAX_VALUE); setHunger(MAX_VALUE); setAttack(1); setCombo(1); 
-    setStyleLevel(1); setStyleExp(0); 
-    setCurrentStyleName("Street");
-  };
-  const modifyHealth = useCallback((amount: number) => {
-    setHealth(prev => Math.max(0, Math.min(MAX_VALUE, prev + amount)));
-  }, [MAX_VALUE]);
-  const modifyHunger = useCallback((amount: number) => {
-    setHunger(prev => Math.max(0, Math.min(MAX_VALUE, prev + amount)));
-  }, [MAX_VALUE]);
-  const modifyAttack = useCallback((amount: number) => {
-    setAttack(prev => Math.max(0.1, prev + amount)); 
-  }, []);
-  const modifyCombo = useCallback((amount: number) => {
-    setCombo(prev => Math.max(1, prev + amount));
-  }, []);
-  const modifyStyleLevel = useCallback((amount: number) => {
-      setStyleLevel(prev => Math.max(1, prev + amount)); 
-  }, []);
-  const modifyStyleExp = useCallback((amount: number) => {
-      setStyleExp(prev => {
-          const newExp = prev + amount;
-          if (newExp >= MAX_STYLE_EXP) {
-              setStyleLevel(prevLevel => prevLevel + 1);
-              return newExp - MAX_STYLE_EXP; 
-          } else if (newExp < 0) {
-              setStyleLevel(prevLevel => Math.max(1, prevLevel - 1)); 
-              return Math.max(0, MAX_STYLE_EXP + newExp); 
-          } else {
-              return newExp;
-          }
-      });
-  }, [MAX_STYLE_EXP]);
+  useEffect(() => {
+    // Check if the player is near the fridge
+    const fridgeX = 18;
+    const fridgeY = 40;
+    const distanceThreshold = 2; // Adjust as needed
 
-  // --- End Debug Handlers ---
+    const distance = Math.sqrt(
+      Math.pow(playerPosition.x - fridgeX, 2) + Math.pow(playerPosition.y - fridgeY, 2)
+    );
+
+    if (distance <= distanceThreshold) {
+      setIsFridgeMenuOpen(true);
+    } else {
+      setIsFridgeMenuOpen(false);
+    }
+  }, [playerPosition]);
 
   const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isMoving || (e.target as HTMLElement).closest('[data-clickable-object="true"]') || 
@@ -264,10 +276,18 @@ const GameArea = () => {
     setShowDebugMenu(prev => !prev);
   }, []);
 
-  // --- Main Render Logic ---
   return (
     <div style={roomStyle} onClick={handleBackgroundClick}>
       <h2 style={gameTitleStyle}>Basement Apartment</h2>
+
+      {isFridgeMenuOpen && (
+        <FridgeMenu
+          inventory={fridgeInventory}
+          onClose={() => {
+            setIsFridgeMenuOpen(false);
+          }}
+        />
+      )}
 
       <SceneObjects objects={sceneObjectsData} />
 
@@ -301,7 +321,6 @@ const GameArea = () => {
   );
 };
 
-// --- Main Page Component ---
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   const handleContinue = () => { setShowSplash(false); };
@@ -316,5 +335,3 @@ export default function Home() {
     </>
   );
 }
-
-// Styles moved to page.styles.ts
