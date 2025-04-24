@@ -2,25 +2,47 @@
 
 import React from 'react';
 
-// Define styles needed by this component
+// Adjusted styles for smaller UI
 const uiContainerStyle: React.CSSProperties = {
-  position: 'absolute', top: '20px', left: '20px', backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  padding: '1rem', borderRadius: '8px', color: 'white', zIndex: 150, // High z-index
-  display: 'flex', flexDirection: 'column', gap: '0.75rem'
+  position: 'absolute', top: '15px', left: '15px', 
+  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  padding: '0.6rem', 
+  borderRadius: '6px', 
+  color: 'white', 
+  zIndex: 200, 
+  display: 'flex', 
+  flexDirection: 'column', 
+  gap: '0.5rem' 
 };
-const meterContainerStyle: React.CSSProperties = { marginBottom: '0.5rem' };
+const meterContainerStyle: React.CSSProperties = { marginBottom: '0.3rem' }; 
 const meterLabelValueContainerStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.9rem'
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  marginBottom: '3px', 
+  fontSize: '0.75rem' 
 };
-const meterLabelStyle: React.CSSProperties = { marginRight: '10px', fontWeight: 'bold' };
+const meterLabelStyle: React.CSSProperties = { marginRight: '8px', fontWeight: 'bold' }; 
 const meterValueStyle: React.CSSProperties = { fontFamily: 'monospace' };
 const meterBarStyle: React.CSSProperties = {
-  width: '150px', height: '12px', backgroundColor: '#555',
-  borderRadius: '6px', overflow: 'hidden',
+  width: '120px', 
+  height: '10px', 
+  backgroundColor: '#555',
+  borderRadius: '5px', 
+  overflow: 'hidden',
 };
 const meterFillBaseStyle: React.CSSProperties = {
-  height: '100%', borderRadius: '6px', transition: 'width 0.3s ease-in-out',
+  height: '100%', 
+  borderRadius: '5px', 
+  transition: 'width 0.3s ease-in-out',
 };
+
+const otherStatStyle: React.CSSProperties = { fontSize: '0.75rem' };
+
+// Style EXP Meter specific style
+const styleExpMeterContainerStyle: React.CSSProperties = {
+   ...meterContainerStyle, // Inherit base margin
+   marginTop: '2px' // Add a small top margin to separate from Style Level text
+}
 
 interface PlayerStatsUIProps {
   health: number;
@@ -28,8 +50,10 @@ interface PlayerStatsUIProps {
   attack: number;
   combo: number;
   styleLevel: number;
+  styleExp: number; // Added Style EXP
   currentStyleName: string;
-  MAX_VALUE: number;
+  MAX_VALUE: number; // Used for Health/Hunger
+  MAX_STYLE_EXP: number; // Added for Style EXP max
 }
 
 const PlayerStatsUI: React.FC<PlayerStatsUIProps> = ({
@@ -38,19 +62,25 @@ const PlayerStatsUI: React.FC<PlayerStatsUIProps> = ({
   attack,
   combo,
   styleLevel,
+  styleExp, // Destructure new prop
   currentStyleName,
   MAX_VALUE,
+  MAX_STYLE_EXP // Destructure new prop
 }) => {
-  // Calculate fill styles locally based on props
   const healthFillStyle: React.CSSProperties = {
     ...meterFillBaseStyle,
     width: `${(health / MAX_VALUE) * 100}%`,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#DC2626', // Red color for health
   };
   const hungerFillStyle: React.CSSProperties = {
     ...meterFillBaseStyle,
     width: `${(hunger / MAX_VALUE) * 100}%`,
-    backgroundColor: '#FFC107',
+    backgroundColor: '#16A34A', // Green color for hunger
+  };
+  const styleExpFillStyle: React.CSSProperties = {
+    ...meterFillBaseStyle,
+    width: `${(styleExp / MAX_STYLE_EXP) * 100}%`,
+    backgroundColor: '#6366F1', // Indigo color for style exp
   };
 
   return (
@@ -60,7 +90,7 @@ const PlayerStatsUI: React.FC<PlayerStatsUIProps> = ({
         <div style={meterLabelValueContainerStyle}>
           <span style={meterLabelStyle}>Health:</span>
           <span style={meterValueStyle}>
-            {health.toFixed(0)}/{MAX_VALUE}
+            {health.toFixed(2)}/{MAX_VALUE}
           </span>
         </div>
         <div style={meterBarStyle}>
@@ -72,7 +102,7 @@ const PlayerStatsUI: React.FC<PlayerStatsUIProps> = ({
         <div style={meterLabelValueContainerStyle}>
           <span style={meterLabelStyle}>Hunger:</span>
           <span style={meterValueStyle}>
-            {hunger.toFixed(0)}/{MAX_VALUE}
+            {hunger.toFixed(2)}/{MAX_VALUE}
           </span>
         </div>
         <div style={meterBarStyle}>
@@ -80,12 +110,27 @@ const PlayerStatsUI: React.FC<PlayerStatsUIProps> = ({
         </div>
       </div>
       {/* Other Stats */}
-      <div style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-        Attack: {attack.toFixed(1)}
+      <div style={otherStatStyle}> 
+        Attack: {attack.toFixed(2)}
       </div>
-      <div style={{ fontSize: '0.9rem' }}>Combo: {combo}</div>
-      <div style={{ fontSize: '0.9rem' }}>
+      <div style={otherStatStyle}> 
+        {/* Display combo with 2 decimal places */}
+        Combo: {combo.toFixed(2)} 
+      </div>
+      <div style={otherStatStyle}> 
         Style: {currentStyleName} (Lv {styleLevel})
+      </div>
+      {/* Style EXP Meter */}
+       <div style={styleExpMeterContainerStyle}>
+        <div style={meterLabelValueContainerStyle}>
+          <span style={meterLabelStyle}>EXP:</span>
+          <span style={meterValueStyle}>
+            {styleExp.toFixed(2)}/{MAX_STYLE_EXP}
+          </span>
+        </div>
+        <div style={meterBarStyle}>
+          <div style={styleExpFillStyle} />
+        </div>
       </div>
     </div>
   );
