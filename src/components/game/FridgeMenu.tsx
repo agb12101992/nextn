@@ -1,29 +1,30 @@
 import React from 'react';
 
 interface FridgeSlot {
-  items: string[];
+  item: string | null;
+  count: number;
 }
 
 interface FridgeMenuProps {
   inventory: FridgeSlot[];
   onClose: () => void;
+  onItemClick: (item: string | null, index: number) => void;
 }
 
-const FridgeMenu: React.FC<FridgeMenuProps> = ({ inventory, onClose }) => {
+const FridgeMenu: React.FC<FridgeMenuProps> = ({ inventory, onClose, onItemClick }) => {
   return (
     <div className="fridge-menu">
       <h2>Fridge Inventory</h2>
       <div className="slots-container">
         {inventory.map((slot, index) => (
-          <div key={index} className="slot">
+          <button key={index} className="slot" onClick={() => onItemClick(slot.item, index)}>
             <h3>Slot {index + 1}</h3>
-            <ul>
-              {slot.items.slice(0, 3).map((item, itemIndex) => (
-                <li key={itemIndex}>{item}</li>
-              ))}
-              {slot.items.length > 3 && <li>...and more</li>}
-            </ul>
-          </div>
+            {slot.item ? (
+              <p>{slot.item} (x{slot.count})</p>
+            ) : (
+              <p>Empty</p>
+            )}
+          </button>
         ))}
       </div>
       <button onClick={onClose}>Close</button>
@@ -41,9 +42,7 @@ const FridgeMenu: React.FC<FridgeMenuProps> = ({ inventory, onClose }) => {
           display: flex;
           flex-direction: row;
           gap: 8px;
-          max-height: calc(100vh - 100px);
-          overflow-x: auto;
-          width: 500px;
+          width: 700px;
           color: white;
         }
         .slots-container {
@@ -53,12 +52,17 @@ const FridgeMenu: React.FC<FridgeMenuProps> = ({ inventory, onClose }) => {
         .slot {
           border: 1px solid #ddd;
           padding: 10px;
-          width: 150px;
+          width: 120px;
           min-height: 100px;
+          cursor: pointer;
+          text-align: center;
         }
         ul {
           list-style: none;
           padding: 0;
+        }
+        p {
+          margin: 5px 0;
         }
       `}</style>
     </div>

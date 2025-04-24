@@ -9,21 +9,29 @@ import SceneObjects, { SceneObjectConfig } from '../components/game/SceneObjects
 import SplashScreen from '../components/game/SplashScreen'; 
 import { roomStyle, gameTitleStyle } from './page.styles'; // Import styles
 import FridgeMenu from '../components/game/FridgeMenu';
+import DoorMenu from '../components/game/DoorMenu'; // Import DoorMenu
+import StoreMenu from '../components/game/StoreMenu'; // Import StoreMenu
 
 // --- Game Area Component ---
 const GameArea = () => {
   // Game State
   const [isFridgeMenuOpen, setIsFridgeMenuOpen] = useState(false);
+  const [isDoorMenuOpen, setIsDoorMenuOpen] = useState(false); // State for DoorMenu
+  const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false); // State for StoreMenu
   const [fridgeInventory, setFridgeInventory] = useState([
-    { items: [] }, 
-    { items: [] }, 
-    { items: [] }, 
-    { items: [] }, 
-    { items: [] }, 
+    { item: null, count: 0 },
+    { item: null, count: 0 },
+    { item: null, count: 0 },
+    { item: null, count: 0 },
+    { item: null, count: 0 },
   ]);
 
   const [playerPosition, setPlayerPosition] = useState({ x: 50, y: 50 });
   const [isMoving, setIsMoving] = useState(false);
+
+  // Target positions for menus
+  const [fridgeTarget, setFridgeTarget] = useState<{x: number, y:number} | null>(null);
+  const [doorTarget, setDoorTarget] = useState<{x: number, y:number} | null>(null);
 
   // UI State
   const [health, setHealth] = useState(100);
@@ -38,13 +46,19 @@ const GameArea = () => {
   const [showDebugMenu, setShowDebugMenu] = useState(false);
 
   // --- Game Logic ---
-  const movePlayer = useCallback((targetX: number, targetY: number) => {
-    if (isMoving) return;
-    setIsMoving(true);
-    setPlayerPosition({ x: targetX, y: targetY });
-    setTimeout(() => {
-      setIsMoving(false);
-    }, 500);
+  const movePlayer = useCallback((targetX: number, targetY: number): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      if (isMoving) {
+        resolve();
+        return;
+      }
+      setIsMoving(true);
+      setPlayerPosition({ x: targetX, y: targetY });
+      setTimeout(() => {
+        setIsMoving(false);
+        resolve();
+      }, 500);
+    });
   }, [isMoving]);
 
     // --- Debug Handlers ---
@@ -85,13 +99,106 @@ const GameArea = () => {
 
   // Click Handlers for Objects
   const handleCouchClick = useCallback(() => { movePlayer(50, 80); }, [movePlayer]);
-  const handleFridgeClick = useCallback(() => {
-    movePlayer(18, 40);
+  const handleFridgeClick = useCallback(async () => {
+    await movePlayer(18, 40);
+    setFridgeTarget({x: 18, y: 40});
   }, [movePlayer]);
   const handleBooktableClick = useCallback(() => { movePlayer(25, 80); }, [movePlayer]);
   const handleRugClick = useCallback(() => { movePlayer(50, 30); }, [movePlayer]);
   const handlePunchingBagClick = useCallback(() => { movePlayer(75, 90); }, [movePlayer]); 
-  const handleDoorClick = useCallback(() => { movePlayer(75, 30); }, [movePlayer]); // New handler
+  const handleDoorClick = useCallback(async () => {
+    await movePlayer(75, 30);
+    setDoorTarget({x: 75, y: 30});
+  }, [movePlayer]); // Modified handler
+
+  // Door Menu Handlers (Placeholders)
+  const handleStoreOption = () => {
+    setIsStoreMenuOpen(true);
+    setIsDoorMenuOpen(false);
+  }
+
+  const handleFightOption = () => {
+      console.log("Fight option selected");
+      setIsDoorMenuOpen(false);
+      setDoorTarget(null);
+  }
+
+    // Store Menu Handlers
+    const handleBuyEnergyDrink = () => {
+        setHunger(prev => Math.min(MAX_VALUE, prev + 20));
+        setFridgeInventory(prev => {
+          let newInventory = [...prev];
+          for (let i = 0; i < newInventory.length; i++) {
+            if (newInventory[i].item === null || newInventory[i].item === "Energy Drink" && newInventory[i].count < 3) {
+              newInventory[i] = { item: "Energy Drink", count: newInventory[i].count + 1 };
+              return newInventory;
+            }
+          }
+          return prev; // No available slot
+        });
+    };
+
+    const handleBuyPizza = () => {
+        setHunger(prev => Math.min(MAX_VALUE, prev + 50));
+        setFridgeInventory(prev => {
+          let newInventory = [...prev];
+          for (let i = 0; i < newInventory.length; i++) {
+            if (newInventory[i].item === null || newInventory[i].item === "Pizza" && newInventory[i].count < 3) {
+              newInventory[i] = { item: "Pizza", count: newInventory[i].count + 1 };
+              return newInventory;
+            }
+          }
+          return prev; // No available slot
+        });
+    };
+
+    const handleBuyProteinShake = () => {
+        setHunger(prev => Math.min(MAX_VALUE, prev + 30));
+        setFridgeInventory(prev => {
+          let newInventory = [...prev];
+          for (let i = 0; i < newInventory.length; i++) {
+            if (newInventory[i].item === null || newInventory[i].item === "Protein Shake" && newInventory[i].count < 3) {
+              newInventory[i] = { item: "Protein Shake", count: newInventory[i].count + 1 };
+              return newInventory;
+            }
+          }
+          return prev; // No available slot
+        });
+    };
+
+    const handleGoBack = () => {
+        setIsStoreMenuOpen(false);
+        setIsDoorMenuOpen(true);
+    }
+
+    const handleEatItem = (item: string | null, index: number) => {
+      if (!item) return;
+
+      let hungerRestore = 0;
+      switch (item) {
+        case "Energy Drink":
+          hungerRestore = 20;
+          break;
+        case "Pizza":
+          hungerRestore = 50;
+          break;
+        case "Protein Shake":
+          hungerRestore = 30;
+          break;
+        default:
+          break;
+      }
+
+      setHunger(prev => Math.min(MAX_VALUE, prev + hungerRestore));
+      setFridgeInventory(prev => {
+        let newInventory = [...prev];
+        newInventory[index] = { item: newInventory[index].item, count: newInventory[index].count - 1 };
+        if (newInventory[index].count <= 0) {
+          newInventory[index] = { item: null, count: 0 };
+        }
+        return newInventory;
+      });
+    };
 
    // --- Scene Object Configuration ---
   const sceneObjectsData: SceneObjectConfig[] = [
@@ -212,7 +319,7 @@ const GameArea = () => {
           x > rugCenterX - rugInteractRangeX &&
           x < rugCenterX + booktableInteractRangeX &&
           y > rugCenterY - rugInteractRangeY &&
-          y < rugCenterY + booktableInteractRangeY;
+          y > rugCenterY + booktableInteractRangeY;
 
       if (!isMoving && isOnRug) {
         setAttack(prev => prev + 0.01); 
@@ -243,23 +350,39 @@ const GameArea = () => {
   }, [playerPosition, isMoving, health, hunger, styleLevel, setHealth, setHunger, setStyleLevel, setStyleExp, setAttack, setCombo, MAX_VALUE, MAX_STYLE_EXP]); 
 
   useEffect(() => {
-    // Check if the player is near the fridge
-    const fridgeX = 18;
-    const fridgeY = 40;
     const distanceThreshold = 2; // Adjust as needed
 
-    const distance = Math.sqrt(
-      Math.pow(playerPosition.x - fridgeX, 2) + Math.pow(playerPosition.y - fridgeY, 2)
-    );
-
-    if (distance <= distanceThreshold) {
-      setIsFridgeMenuOpen(true);
-    } else {
-      setIsFridgeMenuOpen(false);
+    if (fridgeTarget) {
+      const fridgeDistance = Math.sqrt(
+        Math.pow(playerPosition.x - fridgeTarget.x, 2) + Math.pow(playerPosition.y - fridgeTarget.y, 2)
+      );
+      if (fridgeDistance <= distanceThreshold) {
+        setIsFridgeMenuOpen(true);
+        setIsDoorMenuOpen(false);
+        setIsStoreMenuOpen(false);
+        setFridgeTarget(null);
+      } else {
+        setIsFridgeMenuOpen(false);
+      }
+    } else if (doorTarget) {
+      const doorDistance = Math.sqrt(
+        Math.pow(playerPosition.x - doorTarget.x, 2) + Math.pow(playerPosition.y - doorTarget.y, 2)
+      );
+      if (doorDistance <= distanceThreshold) {
+        setIsDoorMenuOpen(true);
+        setIsFridgeMenuOpen(false);
+        setIsStoreMenuOpen(false);
+        setDoorTarget(null);
+      } else {
+        setIsDoorMenuOpen(false);
+      }
     }
-  }, [playerPosition]);
+  }, [playerPosition, fridgeTarget, doorTarget]);
 
   const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isFridgeMenuOpen || isDoorMenuOpen || isStoreMenuOpen) {
+          return; // Prevent movement when any menu is open
+      }
     if (isMoving || (e.target as HTMLElement).closest('[data-clickable-object="true"]') || 
         (e.target as HTMLElement).closest('[style*="z-index: 150"]') || 
         (e.target as HTMLElement).closest('[style*="z-index: 200"]') || 
@@ -285,8 +408,28 @@ const GameArea = () => {
           inventory={fridgeInventory}
           onClose={() => {
             setIsFridgeMenuOpen(false);
+            setFridgeTarget(null); // Clear target on close
           }}
+          onItemClick={handleEatItem}
         />
+      )}
+
+      {isDoorMenuOpen && ( // Conditional rendering for DoorMenu
+          <DoorMenu 
+              onClose={() => setIsDoorMenuOpen(false)}
+              onStoreClick={handleStoreOption}
+              onFightClick={handleFightOption}
+          />
+      )}
+
+      {isStoreMenuOpen && (
+          <StoreMenu
+              onClose={() => setIsStoreMenuOpen(false)}
+              onBuyEnergyDrink={handleBuyEnergyDrink}
+              onBuyPizza={handleBuyPizza}
+              onBuyProteinShake={handleBuyProteinShake}
+              onGoBack={handleGoBack}
+          />
       )}
 
       <SceneObjects objects={sceneObjectsData} />
